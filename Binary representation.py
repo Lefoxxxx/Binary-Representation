@@ -51,7 +51,7 @@ def convert_to_binary (number: str) -> str:
 	return (binary_integer if decimal_str == None else (binary_integer, binary_decimal))
 
 
-def binary_to_deanery (number: str) -> int:
+def binary_to_denary (number: str) -> int:
 	decimal_value = 0.0
 	integer_value = 0
 
@@ -135,11 +135,11 @@ def normalise (binary: str, mantissa_bits: int, exponent_bits: int):
 	elif len(exponent_binary) > exponent_bits and mantissa[0] == "1":
 		return "\nExponent bits too small! Underflow error!"
 	else:
-		exponent_binary = exponent_binary.ljust(exponent_bits,"0") # Ensuring the exponent binary is in a suitable number of bits available.
+		exponent_binary = exponent_binary.rjust(exponent_bits,"0") # Ensuring the exponent binary is in a suitable number of bits available.
 	
 #------------- Preparing the normliased form --------------------------
 	temp = mantissa[0] + "." + mantissa[1:]
-	normalised_form1 = str(binary_to_deanery(temp)) + f"*2^{exponent}"
+	normalised_form1 = str(binary_to_denary(temp)) + f"*2^{exponent}"
 	normalised_form2 = mantissa + " | " + exponent_binary
 
 
@@ -148,23 +148,24 @@ def normalise (binary: str, mantissa_bits: int, exponent_bits: int):
 #def error_calculation ()
 
 def main (number_to_convert , objective, mantissa_bits = None, exponent_bits = None, exponent = None):
-	if objective == "d-n": #deanery to normalised
+	if objective == "d-n": #denary to normalised
 		binary = convert_to_binary(number_to_convert)
 		normalised_form = normalise (binary, mantissa_bits, exponent_bits)
 		return normalised_form
 	elif objective == "n-d":
-		deanery = binary_to_deanery(number_to_convert)
-		return f"\nThe deanery value of your normalised binary is: {deanery * (2**int(exponent))}"
+		binary = number_to_convert #binary = mantissa	
+		denary = binary_to_denary(number_to_convert)
+		return f"\nThe denary value of your normalised binary is: {denary * (2**int(exponent))}"
 
 		
 
 
 while True:
-	task = input("\nWould you like to go from deanery to normalised binary (d-n) or normalised binary to deanery(n-d)? Please enter 'd-n' or 'n-d' : ")
+	task = input("\nWould you like to go from denary to normalised binary (d-n) or normalised binary to denary(n-d)? Please enter 'd-n' or 'n-d' : ")
 
 	if task == "d-n":
 		while True:
-			user_input = input("\nInput a deanery number to be normalised, enter 'exit' to go back to the menu: ")
+			user_input = input("\nInput a denary number to be normalised, enter 'exit' to go back to the menu: ")
 			if user_input.lower() == "exit":
 				break
 			mantissa_bits = input("\nEnter the number of bits available for the mantissa: ")
