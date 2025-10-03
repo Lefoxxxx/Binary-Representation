@@ -1,12 +1,13 @@
 # --------- Global Variables -----------------
 user_input = ""	
 
+#def twos_complement_binary (number: int):
+
 def convert_to_binary (number: str) -> str:
 	negative = False
 #----------------------Decimal----------------------------------------
 	try:
 		integer_str, decimal_str = str(number).split(".")
-		print(str(number).split("."))
 	except ValueError:
 		integer_str, decimal_str = number, None
 #-----------------------Integer----------------------------------------
@@ -111,7 +112,7 @@ def normalise (binary: str, mantissa_bits: int, exponent_bits: int):
 		binary_integer = binary
 
 	if binary_integer != '0':
-		exponent = len(binary_integer) if binary_integer[0] != "1" else len(binary_integer[1:])
+		exponent = len(binary_integer[1:]) #if binary_integer[0] != "1" else len(binary_integer[1:])
 		#tail_stream = "0"+ binary_integer[1:] + binary_decimal #working in 2's complement so the first has to be 0
 		
 		
@@ -179,22 +180,32 @@ while True:
 			except:
 				#valid = False
 				raise ValueError ("\nHas to be a number.")
-			print(main(user_input, task, mantissa_bits, exponent_bits, None))
+			print(main(user_input, task, mantissa_bits, exponent_bits))
 	elif task == "n-d":
-		while True:
+		while user_input.lower() != "exit":
 			user_input = input("\nPlease enter your normalised binary (mantissa only), enter 'exit' to go back to the menu: ")
 			if user_input.lower() == "exit":
 				break
 			exponent_type = ""
-			while exponent_type != "1" or exponent_type != "2":
-				exponent_type = input("\n What type of exponent are you entering?\n [1] binary\n [2] Normal number\n Enter 1 or 2 to select: ")
+			while exponent_type != "1" or exponent_type != "2" and not ValueError:
+				exponent_type = input("\n What type of exponent are you entering?\n\n [1] Binary\n\n [2] Normal number\n\n Enter 1 or 2 to select: ")
 				if exponent_type == "1":
 					exponent = input("\nPlease enter your exponent in binary: ")
-					exponent = binary_to_deanery(exponent)
+					try:
+						exponent = convert_to_binary(exponent)
+					except ValueError:
+						raise ValueError ("\nExponent has to be in binary.")
+					exponent = binary_to_denary(exponent)
 				elif exponent_type == "2":
 					exponent = input("\nPlease enter your exponent as a integer: ")
 				else:
 					print("\nInvalid input. Please try again.")
-			print(main(user_input, task, mantissa_bits, exponent_bits, exponent))
+				try:
+					int(exponent)
+					exponent = int(exponent) if exponent_type == "2" else exponent
+					break
+				except ValueError:
+					raise ValueError ("\nExponent has to be an integer.")
+			print(main(user_input, task, exponent= exponent))
 	else:
 		print ("No")
