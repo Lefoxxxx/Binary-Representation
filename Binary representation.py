@@ -104,9 +104,10 @@ def normalise (binary: str, mantissa_bits: int, exponent_bits: int):
 		exponent = len(binary_integer[1:])
 		
 	else:
+		
 		k = binary_decimal.find("1")
 		exponent = -(k)
-		mantissa = "0"+binary_decimal[k:] #removing the leading 0s and the first 1
+		#mantissa = "0"+binary_decimal[k:] #removing the leading 0s and the first 1
 
 	
 	if len(mantissa) > mantissa_bits:
@@ -125,14 +126,17 @@ def normalise (binary: str, mantissa_bits: int, exponent_bits: int):
 	elif len(exponent_binary) > exponent_bits and mantissa[0] == "1":
 		return "\nExponent bits too small! Underflow error!"
 	else:
-		exponent_binary = exponent_binary.rjust(exponent_bits,"0") # Ensuring the exponent binary is in a suitable number of bits available.
+		if exponent_binary[0] == "1": #negative exponent
+			exponent_binary = exponent_binary.rjust(exponent_bits,"1")
+		else:
+			exponent_binary = exponent_binary.rjust(exponent_bits,"0") # Ensuring the exponent binary is in a suitable number of bits available.
 	
 #------------- Preparing the normliased form --------------------------
 	#temp = mantissa[0] + "." + mantissa[1:]
 	normalised_form1 = str(binary_to_denary(mantissa[0]+"."+mantissa[1:])) + f"*2^{exponent}"
 	normalised_form2 = mantissa + " | " + exponent_binary
 
-	formatting= f"\n\nIn general floating point form: {normalised_form1}.\n\nIn full binary form: {normalised_form2[0]}.{normalised_form2[1:]} where {mantissa[0]}.{mantissa[1:]} is your mantissa and {exponent_binary} is your exponent in binary. "
+	formatting= f"\n\nIn general floating point form: {normalised_form1} / {mantissa[0]}.{mantissa[1:]} *2^{exponent}.\n\nIn full binary form: {normalised_form2[0]}.{normalised_form2[1:]} where {mantissa[0]}.{mantissa[1:]} is your mantissa and {exponent_binary} is your exponent in binary. "
 	error_formatting = f"\n\nSince your mantissa bits was too small, we couldn't represent the true value: \nAbsolute error: {absolute_error}\nRelative error: {relative_error}%."
 
 	return (formatting + error_formatting) if error else formatting
