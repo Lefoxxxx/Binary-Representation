@@ -152,10 +152,7 @@ def main (number_to_convert , objective, mantissa_bits = None, exponent_bits = N
 		denary = binary_to_denary(number_to_convert)
 		return f"\nThe denary value of your normalised binary is: {denary * (2**int(exponent))}"
 	
-
-
-
-def deanery_norm_main():
+def denary_norm_main():
 	while True:
 			user_input = input("\nInput a denary number to be normalised, enter 'exit' to go back to the menu: ")
 			if user_input.lower() == "exit":
@@ -168,13 +165,11 @@ def deanery_norm_main():
 				float(user_input)
 				mantissa_bits = int(mantissa_bits)
 				exponent_bits = int(exponent_bits)
-					#valid = True
+				print(main(user_input, "d-n", mantissa_bits, exponent_bits))
 			except:
-				#valid = False
 				raise ValueError ("\nHas to be a number.")
-			print(main(user_input, "d-n", mantissa_bits, exponent_bits))
-
-def norm_to_deanery_main():
+			
+def norm_to_denary_main():
 	error = False
 	while True:
 		user_input = input("\n\n\n Please enter your normalised binary (mantissa only), enter 'exit' to go back to the menu: ")
@@ -205,22 +200,59 @@ def norm_to_deanery_main():
 				print("\nInvalid input. Please try again.")
 		print(main(user_input, "n-d", exponent = exponent))
 		
+def denary_to_binary_main():
+	while True:
+		user_input = input("\n\nInput a denary number to be converted to binary, enter 'exit' to go back to the menu: ")
+	
+		if user_input.lower() == "exit":
+			selection()
+			break
+		try:
+			float(user_input)
+		except ValueError:
+			print ("\n\nHas to be a number.")
+		binary = convert_to_binary(user_input)
+		if type(binary) == tuple:
+			print(f"\nThe binary value of your denary number is: {binary[0]}.{binary[1]}")
+		else:
+			print(f"\nThe binary value of your denary number is: {binary}")
+
+def binary_to_denary_main():
+	while True:
+		user_input = input("\n\nInput a binary number to be converted to denary, enter 'exit' to go back to the menu: ")
+		if user_input.lower() == "exit":
+			selection()
+			break
+		try:
+			for char in user_input:
+				if char not in "01.":
+					print ("\n\nHas to be a binary number.")
+			denary = binary_to_denary(user_input)
+			print(f"\nThe denary value of your binary number is: {denary}")
+		except ValueError as e:
+			print(e)
 
 def selection():
 	while True:
 		task = input("""\n\n
 Please select one of the following options:
-[1] Denary to Normalised Binary (d-n)
-[2] Normalised Binary to Denary (n-d)
-[3] Exit the program\n\n
-Enter 1, 2 or 3 to select: """)
+[1] Denary to Normalised Binary
+[2] Normalised Binary to Denary
+[3] Convert a denary number to binary
+[4] Convert a binary number to denary
+[5] Exit the program\n\n
+Enter 1, 2, 3, 4 or 5 to select: """)
 		
 		if task == "1":
-			deanery_norm_main()
+			denary_norm_main()
 		elif task == "2":
-			norm_to_deanery_main()
+			norm_to_denary_main()
 		elif task == "3":
-			quit = input("\nAre you sure you want to quit? (y/n): ")
+			denary_to_binary_main()
+		elif task == "4":
+			binary_to_denary_main()
+		elif task == "5":
+			quit = input("\n\nAre you sure you want to quit? (y/n): ")
 			if quit.lower() == "y":
 				break
 		else:
