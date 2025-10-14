@@ -1,7 +1,6 @@
 # --------- Global Variables -----------------
 user_input = ""	
 
-
 def twos_complement_binary (integer: int) -> str:
 	min_binary_bit_len = integer.bit_length() +1
 	integer = 2**min_binary_bit_len - integer
