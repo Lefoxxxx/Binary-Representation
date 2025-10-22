@@ -1,5 +1,4 @@
 # --------- Global Variables -----------------
-user_input = ""	
 
 def twos_complement_binary (integer: int) -> str:
 	min_binary_bit_len = integer.bit_length() +1
@@ -26,6 +25,8 @@ def convert_to_binary (number: str) -> str:
 		decimal_value = float("0." + decimal_str)
 		#if negative == True:
 			#decimal_value = 1 - decimal_value
+		# For two's complement representation of fractional parts, the fractional part of a negative number
+		# is represented as (1 - fractional_part), analogous to how the integer part is handled.
 		decimal_value = (1-decimal_value) if negative else decimal_value
 		while decimal_value > 0:
 			decimal_value *= 2
@@ -37,9 +38,9 @@ def convert_to_binary (number: str) -> str:
 
 #-----------------------Integer----------------------------------------
 	if integer == 0:
-		return ("0" if decimal_str == None else ("0", binary_decimal))
+		return ("0" if decimal_str is None else ("0", binary_decimal))
 
-	if negative and decimal_str != None:
+	if negative and decimal_str is not None:
 		integer -=1 # very important as you "borrow" a negative 1 to "subtract x" to get your desired fractional part 
 
 	while integer > 0:
@@ -100,7 +101,7 @@ def normalise (binary: str, mantissa_bits: int, exponent_bits: int):
 		binary_integer = binary
 
 	if binary_integer != '0':
-		exponent = len(binary_integer[1:])
+		exponent = len(binary_integer) - 1
 		
 	else:
 		
@@ -142,7 +143,11 @@ def normalise (binary: str, mantissa_bits: int, exponent_bits: int):
 
 def error_calculation (mantissa: str, mantissa_error: str):
 	absolute_error = binary_to_denary(mantissa[0]+ "." + mantissa[1:]) - binary_to_denary(mantissa_error)
-	relative_error = (absolute_error / binary_to_denary(mantissa)) * 100
+	denary_mantissa = binary_to_denary(mantissa)
+	if denary_mantissa == 0:
+		relative_error = float('inf')  # or you could use None, or raise an exception
+	else:
+		relative_error = (absolute_error / denary_mantissa) * 100
 	return absolute_error, relative_error
 
 def main (number_to_convert , objective, mantissa_bits = None, exponent_bits = None, exponent = None):
@@ -234,9 +239,10 @@ def binary_to_denary_main():
 			continue
 			
 		try:
-			denary = binary_to_denary(user_input)
-			print(f"\nThe denary value of your binary number is: {denary}")
-		except ValueError as e:
+					break
+			else:
+				denary = binary_to_denary(user_input)
+				print(f"\nThe denary value of your binary number is: {denary}")
 			print(e)
 
 def selection():
