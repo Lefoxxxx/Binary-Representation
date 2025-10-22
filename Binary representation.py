@@ -227,10 +227,13 @@ def binary_to_denary_main():
 		if user_input.lower() == "exit":
 			selection()
 			break
+		
+		# Validate using set operations
+		if not set(user_input).issubset({'0', '1', '.'}):
+			print("\n\nHas to be a binary number.")
+			continue
+			
 		try:
-			for char in user_input:
-				if char not in "01.":
-					print ("\n\nHas to be a binary number.")
 			denary = binary_to_denary(user_input)
 			print(f"\nThe denary value of your binary number is: {denary}")
 		except ValueError as e:
