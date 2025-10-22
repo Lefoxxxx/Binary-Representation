@@ -58,7 +58,7 @@ def binary_to_denary (number: str) -> int:
 
 	try:
 		integer_binary , decimal_binary = number.split(".")
-		has_decimal = True if decimal_binary != "0" or decimal_binary != "" else False
+		has_decimal = bool(decimal_binary)
 	except ValueError:
 		integer_binary = number
 		has_decimal = False
@@ -105,7 +105,7 @@ def normalise (binary: str, mantissa_bits: int, exponent_bits: int):
 	else:
 		
 		k = binary_decimal.find("1")
-		exponent = -(k)
+		exponent = -k
 		#mantissa = "0"+binary_decimal[k:] #removing the leading 0s and the first 1
 
 	
@@ -180,7 +180,7 @@ def norm_to_denary_main():
 			selection()
 			break
 		exponent_type = ""
-		while exponent_type != "1" and exponent_type != "2" or error == True:
+		while exponent_type not in ["1", "2"] or error:
 			exponent_type = input("\n\n\n What type of exponent are you entering?\n\n [1] Binary\n\n [2] Normal number\n\n Enter 1 or 2 to select: ")
 			if exponent_type == "1":
 				exponent = input("\nPlease enter your exponent in binary: ")
@@ -214,6 +214,7 @@ def denary_to_binary_main():
 			float(user_input)
 		except ValueError:
 			print ("\n\nHas to be a number.")
+			continue
 		binary = convert_to_binary(user_input)
 		if type(binary) == tuple:
 			print(f"\nThe binary value of your denary number is: {binary[0]}.{binary[1]}")
