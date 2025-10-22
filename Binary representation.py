@@ -216,7 +216,7 @@ def denary_to_binary_main():
 			print ("\n\nHas to be a number.")
 			continue
 		binary = convert_to_binary(user_input)
-		if type(binary) == tuple:
+		if isinstance(binary, tuple):
 			print(f"\nThe binary value of your denary number is: {binary[0]}.{binary[1]}")
 		else:
 			print(f"\nThe binary value of your denary number is: {binary}")
