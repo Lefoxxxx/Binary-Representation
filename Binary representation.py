@@ -1,7 +1,7 @@
 # --------- Global Variables -----------------
 
-def twos_complement_binary (integer: int) -> str:
-	min_binary_bit_len = integer.bit_length() +1
+def twos_complement_binary (integer: int) -> int:
+	min_binary_bit_len = integer.bit_length() + 1
 	integer = 2**min_binary_bit_len - integer
 	return integer
 
@@ -23,10 +23,6 @@ def convert_to_binary (number: str) -> str:
 #-----------------------Decimal----------------------------------------
 	if decimal_str is not None:
 		decimal_value = float("0." + decimal_str)
-		#if negative == True:
-			#decimal_value = 1 - decimal_value
-		# For two's complement representation of fractional parts, the fractional part of a negative number
-		# is represented as (1 - fractional_part), analogous to how the integer part is handled.
 		decimal_value = (1-decimal_value) if negative else decimal_value
 		while decimal_value > 0:
 			decimal_value *= 2
@@ -50,10 +46,10 @@ def convert_to_binary (number: str) -> str:
 
 	
 	binary_integer = "0" + binary_integer if not negative else binary_integer
-	return (binary_integer if decimal_str == None else (binary_integer, binary_decimal))
+	return (binary_integer if decimal_str is None else (binary_integer, binary_decimal))
 
 
-def binary_to_denary (number: str) -> int:
+def binary_to_denary (number: str) -> float:
 	decimal_value = 0.0
 	integer_value = 0
 
@@ -107,9 +103,7 @@ def normalise (binary: str, mantissa_bits: int, exponent_bits: int):
 		
 		k = binary_decimal.find("1")
 		exponent = -k
-		#mantissa = "0"+binary_decimal[k:] #removing the leading 0s and the first 1
-
-	
+		
 	if len(mantissa) > mantissa_bits:
 		mantissa_error = mantissa[0]+ "." + mantissa[1:mantissa_bits]
 		absolute_error, relative_error = error_calculation (mantissa, mantissa_error, exponent)
@@ -133,17 +127,17 @@ def normalise (binary: str, mantissa_bits: int, exponent_bits: int):
 	
 #------------- Preparing the normliased form --------------------------
 	#temp = mantissa[0] + "." + mantissa[1:]
-	normalised_form1 = str(binary_to_denary(mantissa[0]+"."+mantissa[1:])) + f"*2^{exponent}"
+	normalised_form1 = str(binary_to_denary(f"{mantissa[0]}.{mantissa[1:]}")) + f"*2^{exponent}"
 	normalised_form2 = mantissa + " | " + exponent_binary
 
 	formatting= f"\n\nIn general floating point form: {normalised_form1} / {mantissa[0]}.{mantissa[1:]} *2^{exponent}.\n\nIn full binary form: {normalised_form2[0]}.{normalised_form2[1:]} where {mantissa[0]}.{mantissa[1:]} is your mantissa and {exponent_binary} is your exponent in binary. "
-	error_formatting = f"\n\nSince your mantissa bits was too small, we couldn't represent the true value: \nAbsolute error: {absolute_error}\nRelative error: {relative_error}%."
+	error_formatting = f"\n\nSince your mantissa bits were too small, we couldn't represent the true value: \nAbsolute error: {absolute_error}\nRelative error: {relative_error}%."
 
 	return (formatting + error_formatting) if error else formatting
 
 def error_calculation (mantissa: str, mantissa_error: str, exponent: int):
 	# Calculate the mantissa values in normalized form (0.xxxx)
-	full_mantissa_value = binary_to_denary(mantissa[0]+ "." + mantissa[1:])
+	full_mantissa_value = binary_to_denary(f"{mantissa[0]}.{mantissa[1:]}")
 	truncated_mantissa_value = binary_to_denary(mantissa_error)
 	
 	# Calculate the actual represented values by applying the exponent
@@ -158,7 +152,6 @@ def error_calculation (mantissa: str, mantissa_error: str, exponent: int):
 		relative_error = float('inf')
 	else:
 		relative_error = (absolute_error / full_value) * 100
-	
 	return absolute_error, relative_error
 
 def main (number_to_convert , objective, mantissa_bits = None, exponent_bits = None, exponent = None):
