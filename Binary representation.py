@@ -112,7 +112,7 @@ def normalise (binary: str, mantissa_bits: int, exponent_bits: int):
 	
 	if len(mantissa) > mantissa_bits:
 		mantissa_error = mantissa[0]+ "." + mantissa[1:mantissa_bits]
-		absolute_error, relative_error = error_calculation (mantissa, mantissa_error)
+		absolute_error, relative_error = error_calculation (mantissa, mantissa_error, exponent)
 		error = True
 		mantissa = mantissa[:mantissa_bits]
 	
@@ -141,13 +141,24 @@ def normalise (binary: str, mantissa_bits: int, exponent_bits: int):
 
 	return (formatting + error_formatting) if error else formatting
 
-def error_calculation (mantissa: str, mantissa_error: str):
-	absolute_error = binary_to_denary(mantissa[0]+ "." + mantissa[1:]) - binary_to_denary(mantissa_error)
-	denary_mantissa = binary_to_denary(mantissa)
-	if denary_mantissa == 0:
-		relative_error = float('inf')  # or you could use None, or raise an exception
+def error_calculation (mantissa: str, mantissa_error: str, exponent: int):
+	# Calculate the mantissa values in normalized form (0.xxxx)
+	full_mantissa_value = binary_to_denary(mantissa[0]+ "." + mantissa[1:])
+	truncated_mantissa_value = binary_to_denary(mantissa_error)
+	
+	# Calculate the actual represented values by applying the exponent
+	full_value = full_mantissa_value * (2 ** exponent)
+	truncated_value = truncated_mantissa_value * (2 ** exponent)
+	
+	# Absolute error is the difference in actual values
+	absolute_error = full_value - truncated_value
+	
+	# Relative error uses the full value as denominator
+	if full_value == 0:
+		relative_error = float('inf')
 	else:
-		relative_error = (absolute_error / denary_mantissa) * 100
+		relative_error = (absolute_error / full_value) * 100
+	
 	return absolute_error, relative_error
 
 def main (number_to_convert , objective, mantissa_bits = None, exponent_bits = None, exponent = None):
@@ -164,7 +175,6 @@ def denary_norm_main():
 	while True:
 			user_input = input("\nInput a denary number to be normalised, enter 'exit' to go back to the menu: ")
 			if user_input.lower() == "exit":
-				selection()
 				break
 			mantissa_bits = input("\nEnter the number of bits available for the mantissa: ")
 			exponent_bits = input("\nEnter the number of bits available for the exponent: ")
@@ -182,38 +192,50 @@ def norm_to_denary_main():
 	while True:
 		user_input = input("\n\n\n Please enter your normalised binary (mantissa only), enter 'exit' to go back to the menu: ")
 		if user_input.lower() == "exit":
-			selection()
 			break
-		exponent_type = ""
-		while exponent_type not in ["1", "2"] or error:
-			exponent_type = input("\n\n\n What type of exponent are you entering?\n\n [1] Binary\n\n [2] Normal number\n\n Enter 1 or 2 to select: ")
-			if exponent_type == "1":
-				exponent = input("\nPlease enter your exponent in binary: ")
-				try:
-					int(exponent, 2)
-					exponent = binary_to_denary(exponent)
-					error = False
-				except ValueError:
-					print ("\n\nExponent has to be an integer.\n")
-					error = True
-			elif exponent_type == "2":
-				exponent = input("\nPlease enter your exponent as a integer: ")
-				try:
-					exponent = int(exponent)
-					error = False
-				except ValueError:
-					print ("\nExponent has to be an integer.")
-					error = True
-			else:
-				print("\nInvalid input. Please try again.")
-		print(main(user_input, "n-d", exponent = exponent))
+		
+		# Validate using set operations
+		if not user_input or not set(user_input).issubset({'0', '1', '.'}):
+			print("\n\nHas to be a binary number.")
+			continue
+
+		# Check for multiple decimal points
+		if user_input.count('.') > 1:
+			print("\n\nInvalid format: only one decimal point allowed.")
+			continue
+
+		# Ask for exponent type after validation passes
+		exponent_type = input("\nHow would you like to enter the exponent?\n[1] Binary\n[2] Integer\nEnter 1 or 2: ")
+		
+		if exponent_type == "1":
+			exponent = input("\nPlease enter your exponent in binary: ")
+			try:
+				int(exponent, 2)
+				exponent = binary_to_denary(exponent)
+				error = False
+			except ValueError:
+				print ("\n\nExponent has to be an integer.\n")
+				error = True
+		elif exponent_type == "2":
+			exponent = input("\nPlease enter your exponent as a integer: ")
+			try:
+				exponent = int(exponent)
+				error = False
+			except ValueError:
+				print ("\nExponent has to be an integer.")
+				error = True
+		else:
+			print("\nInvalid input. Please try again.")
+			continue
+		
+		if not error:
+			print(main(user_input, "n-d", exponent = exponent))
 		
 def denary_to_binary_main():
 	while True:
 		user_input = input("\n\nInput a denary number to be converted to binary, enter 'exit' to go back to the menu: ")
 	
 		if user_input.lower() == "exit":
-			selection()
 			break
 		try:
 			float(user_input)
@@ -230,19 +252,22 @@ def binary_to_denary_main():
 	while True:
 		user_input = input("\n\nInput a binary number to be converted to denary, enter 'exit' to go back to the menu: ")
 		if user_input.lower() == "exit":
-			selection()
 			break
 		
 		# Validate using set operations
-		if not set(user_input).issubset({'0', '1', '.'}):
+		if not user_input or not set(user_input).issubset({'0', '1', '.'}):
 			print("\n\nHas to be a binary number.")
+			continue
+		
+		# Check for multiple decimal points
+		if user_input.count('.') > 1:
+			print("\n\nInvalid format: only one decimal point allowed.")
 			continue
 			
 		try:
-					break
-			else:
-				denary = binary_to_denary(user_input)
-				print(f"\nThe denary value of your binary number is: {denary}")
+			denary = binary_to_denary(user_input)
+			print(f"\nThe denary value of your binary number is: {denary}")
+		except ValueError as e:
 			print(e)
 
 def selection():
