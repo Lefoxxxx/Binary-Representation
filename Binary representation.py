@@ -184,8 +184,8 @@ def denary_norm_main():
 				mantissa_bits = int(mantissa_bits)
 				exponent_bits = int(exponent_bits)
 				print(main(user_input, "d-n", mantissa_bits, exponent_bits))
-			except:
-				raise ValueError ("\nHas to be a number.")
+			except ValueError:
+				print ("\nHas to be a number.\n")
 			
 def norm_to_denary_main():
 	error = False
