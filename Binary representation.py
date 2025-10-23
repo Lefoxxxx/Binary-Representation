@@ -1,23 +1,48 @@
-#------------ Global Variables -----------------
+"""Binary/denary conversion utilities with normalisation and an interactive CLI.
 
+Functions convert between denary (decimal) and binary (including fractional
+parts), provide a normalised mantissa/exponent view, and expose interactive
+menu flows for classroom use.
+"""
 
+# --------- Global Variables -----------------
+
+def twos_complement_binary (integer: int) -> int:
+	"""Return the two's-complement integer representing -integer.
+
+	Uses ``integer.bit_length() + 1`` bits to compute the wrapped value such
+	that ``result - (1 << bits) == -integer`` where ``bits`` is that size.
+	"""
+	min_binary_bit_len = integer.bit_length() + 1
+	integer = 2**min_binary_bit_len - integer
+	return integer
 
 def convert_to_binary (number: str) -> str:
+	"""Convert a denary string to binary.
+
+	Accepts inputs like "10", "5.5", "-7.75". Returns a plain string for
+	integers (e.g., "0101") or a tuple ``(integer_bits, fraction_bits)`` for
+	decimals. Negative decimals borrow 1 from the integer part and use
+	``(1 - fractional_part)`` for the fractional bits (two's-complement style).
+	"""
 	negative = False
-#----------------------Decimal----------------------------------------
+	binary_integer = ""
+	binary_decimal = ""
 	try:
 		integer_str, decimal_str = str(number).split(".")
-		print(str(number).split("."))
 	except ValueError:
 		integer_str, decimal_str = number, None
-#-----------------------Integer----------------------------------------
-	
-	
 
-	if decimal_str != None:
-		binary_decimal = ""
-		decimal_str = "0." + decimal_str
-		decimal_value = float(decimal_str)
+#------------------- checking if negative -----------------------
+	if '-' in integer_str:
+		integer = twos_complement_binary(int(integer_str.strip("-")))
+		negative = True
+	else:
+		integer = int(integer_str)
+#-----------------------Decimal----------------------------------------
+	if decimal_str is not None:
+		decimal_value = float("0." + decimal_str)
+		decimal_value = (1-decimal_value) if negative else decimal_value
 		while decimal_value > 0:
 			decimal_value *= 2
 			if decimal_value >=1:
@@ -26,113 +51,95 @@ def convert_to_binary (number: str) -> str:
 			else:
 				binary_decimal += "0"
 
-	binary_integer = ""
-	if '-' in integer_str:
-		#width = pick_width(int(integer_str))
-		integer = int(integer_str.strip("-"))
-		min_binary_bit_len = integer.bit_length() +1
-		negative = True
-	else:
-		integer = int(integer_str)
-	
+#-----------------------Integer----------------------------------------
 	if integer == 0:
-		return ("0" if decimal_str == None else ("0", binary_decimal))
+		return ("0" if decimal_str is None else ("0", binary_decimal))
 
-	
-
-	if negative:
-		integer = 2**min_binary_bit_len - integer
-		if decimal_str != None:
-			integer -=1 #very important as you "borrow" a negative 1 to "subtract x" to get your desired fractional part 
+	if negative and decimal_str is not None:
+		integer -=1 # very important as you "borrow" a negative 1 to "subtract x" to get your desired fractional part 
 
 	while integer > 0:
 		remainder = integer % 2
 		binary_integer = str(remainder) + binary_integer
 		integer = integer // 2
 
-	if not negative:
-		binary_integer = "0" + binary_integer
-		 
-	#if len(binary_decimal) != width:
-		#binary_integer = binary_integer.zfill(width)
-
-	return (binary_integer if decimal_str == None else (binary_integer, binary_decimal))
+	
+	binary_integer = "0" + binary_integer if not negative else binary_integer
+	return (binary_integer if decimal_str is None else (binary_integer, binary_decimal))
 
 
-"""def pick_width (n: int):
-	if -128 <= n <= 127:
-		return 8
-	elif -32768 <= n <= 32767:
-		return 16
-	elif -2147483648 <= n <= 2147483647:
-   		return 32
-	else:
-   		raise ValueError("Out of 32-bit range")"""
-   
+def binary_to_denary (number: str) -> float:
+	"""Convert a binary string (optional fraction) to a denary value.
 
-def binary_to_deanery (number: str) -> str:
+	If the integer part starts with '1', it is interpreted as a negative
+	two's-complement integer for the width of the provided bits. Fractions are
+	summed as usual (1/2, 1/4, ...).
+	"""
 	decimal_value = 0.0
 	integer_value = 0
 
 	try:
 		integer_binary , decimal_binary = number.split(".")
-		has_decimal = True
+		has_decimal = bool(decimal_binary)
 	except ValueError:
 		integer_binary = number
 		has_decimal = False
 
-	if has_decimal:
+	if has_decimal: #there is a decimal part
 		for x in range(len(decimal_binary)):
 			if decimal_binary[x] == "1":
 				decimal_value += 2**(-x-1) 
 
-	if integer_binary[0] == "1" and has_decimal == True:
-		return -1 - decimal_value
-	
-	else:
-		for i in reversed(range(len(integer_binary))):
-			if integer_binary[i] == "1":
-				integer_value += 2**i
 
-	
-
-	'''if isinstance(number, tuple):
-		integer_binary , decimal_binary = number
-		has_decimal = True
-	else:
-		integer_binary = number
-		has_decimal = False'''
-	
+	if integer_binary[0] == "1": #negative number
+		value = -(2**(len(integer_binary)-1))
+		for x in range(1, len(integer_binary)):
+			if integer_binary[x] == "1":
+				value += 2**(len(integer_binary)-x-1)
+		if has_decimal:
+			return value + decimal_value
+		else:
+			return value
 		
-
+	else: #positive number
+		for x in range(len(integer_binary)):
+			if integer_binary[x] == "1":
+				integer_value += 2**(len(integer_binary)-x-1)
+		if has_decimal:
+			return integer_value + decimal_value
+		else:
+			return integer_value
 	
-		
-	
-    
-
 def normalise (binary: str, mantissa_bits: int, exponent_bits: int):
+	"""Normalise a binary value into mantissa/exponent bit widths.
+
+	Pads or truncates the mantissa to ``mantissa_bits`` and encodes the exponent
+	in two's complement using ``exponent_bits``. Returns a formatted description
+	and, if truncation occurred, includes absolute and relative error.
+	"""
 	error = False
+	absolute_error = 0
+	relative_error = 0
 	mantissa = ''.join(binary) #mantissa = binary_integer + binary_decimal
 	try:
-		binary_integer, binary_decimal = binary
+		binary_integer, binary_decimal = binary # binary_intteger: str, binary_decimal: str
 
 	except ValueError:
 		binary_integer = binary
 
 	if binary_integer != '0':
-		exponent = len(binary_integer)
-		#tail_stream = "0"+ binary_integer[1:] + binary_decimal #working in 2's complement so the first has to be 0
+		exponent = len(binary_integer) - 1
 		
-		
-	
 	else:
+		
 		k = binary_decimal.find("1")
 		exponent = -k
-
-	
+		
 	if len(mantissa) > mantissa_bits:
+		mantissa_error = mantissa[0]+ "." + mantissa[1:mantissa_bits]
+		absolute_error, relative_error = error_calculation (mantissa, mantissa_error, exponent)
+		error = True
 		mantissa = mantissa[:mantissa_bits]
-		#absolute_err, relative_err = error_calculation (mantissa) #to be worked on (ignore for now_)
 	
 	elif len(mantissa) < mantissa_bits:
 		mantissa = mantissa.ljust(mantissa_bits, "0")
@@ -140,59 +147,199 @@ def normalise (binary: str, mantissa_bits: int, exponent_bits: int):
 #------------- Converting the exponent to a binary --------------------
 	exponent_binary = convert_to_binary(str(exponent))
 	if len(exponent_binary) > exponent_bits and mantissa[0] == "0":
-		return "Exponent bits too small! Overflow error!"
+		return "\nExponent bits too small! Overflow error!"
 	elif len(exponent_binary) > exponent_bits and mantissa[0] == "1":
-		return "Exponent bits too small! Underflow error!"
+		return "\nExponent bits too small! Underflow error!"
 	else:
-		exponent_binary = exponent_binary.ljust(exponent_bits,"0") # Ensuring the exponent binary is in a suitable number of bits available.
+		if exponent_binary[0] == "1": #negative exponent
+			exponent_binary = exponent_binary.rjust(exponent_bits,"1")
+		else:
+			exponent_binary = exponent_binary.rjust(exponent_bits,"0") # Ensuring the exponent binary is in a suitable number of bits available.
 	
+
 #------------- Preparing the normliased form --------------------------
-	temp = mantissa[0] + "." + mantissa[1:]
-	print (temp)
-	normalised_form1 = str(binary_to_deanery(temp)) + f"*2^{exponent}"
-	normalised_form2 = mantissa + " " + exponent_binary
+	normalised_form1 = str(binary_to_denary(f"{mantissa[0]}.{mantissa[1:]}")) + f"*2^{exponent}"
+	normalised_form2 = mantissa + " | " + exponent_binary
+
+	formatting= f"\n\nIn general floating point form: {normalised_form1} / {mantissa[0]}.{mantissa[1:]} *2^{exponent}.\n\nIn full binary form: {normalised_form2[0]}.{normalised_form2[1:]} where {mantissa[0]}.{mantissa[1:]} is your mantissa and {exponent_binary} is your exponent in binary. "
+	error_formatting = f"\n\nSince your mantissa bits were too small, we couldn't represent the true value: \nAbsolute error: {absolute_error}\nRelative error: {relative_error}%."
+
+	return (formatting + error_formatting) if error else formatting
+
+def error_calculation (mantissa: str, mantissa_error: str, exponent: int):
+	"""Compute absolute and relative (%) error for mantissa truncation.
+
+	Compares the full mantissa vs. a truncated mantissa at the same exponent and
+	returns ``(absolute_error, relative_error_percent)``.
+	"""
+	# Calculate the mantissa values in normalized form (0.xxxx)
+	full_mantissa_value = binary_to_denary(f"{mantissa[0]}.{mantissa[1:]}")
+	truncated_mantissa_value = binary_to_denary(mantissa_error)
 	
+	# Calculate the actual represented values by applying the exponent
+	full_value = full_mantissa_value * (2 ** exponent)
+	truncated_value = truncated_mantissa_value * (2 ** exponent)
+	
+	# Absolute error is the difference in actual values
+	absolute_error = full_value - truncated_value
+	
+	# Relative error uses the full value as denominator
+	if full_value == 0:
+		relative_error = float('inf')
+	else:
+		relative_error = (absolute_error / full_value) * 100
+	return absolute_error, relative_error
 
-	if 	not error:
-		return f"\nIn general floating point form: {normalised_form1}. In full binary form: {normalised_form2[0]}.{normalised_form2[1:]} where {mantissa} is your mantissa and {exponent_binary} is your exponent in binary. "
+def main (number_to_convert , objective, mantissa_bits = None, exponent_bits = None, exponent = None):
+	"""High-level entry for conversions.
 
-	if error:
-		return None #for now
+	Args:
+		number_to_convert: Denary string or binary mantissa string depending on objective.
+		objective: "d-n" (denary → normalised) or "n-d" (normalised → denary).
+		mantissa_bits: Required when objective is "d-n".
+		exponent_bits: Required when objective is "d-n".
+		exponent: Required when objective is "n-d".
 
-#def error_calculation ()
-
-def main (number, mantissa_bits, exponent_bits, objective):
-	if objective == "d-n": #deanery to normalised
-		
-		binary = convert_to_binary(number)
+	Returns a human-readable description or result string.
+	"""
+	if objective == "d-n": #denary to normalised
+		binary = convert_to_binary(number_to_convert)
 		normalised_form = normalise (binary, mantissa_bits, exponent_bits)
 		return normalised_form
 	elif objective == "n-d":
-		deanery = binary_to_deanery()
+		binary = number_to_convert #binary = mantissa	
+		denary = binary_to_denary(number_to_convert)
+		return f"\nThe denary value of your normalised binary is: {denary * (2**int(exponent))}"
 	
-
-
-
-
-task = input("Would you like to go from deanery to normalised binary (d-n) or normalised binary to deanery(n-d)? Please enter 'd-n' or 'n-d' : ")
-if task == "d-n":
-	user_input = input("Input a deanery number to be normalised: ")
-	mantissa_bits = 8#int(input("\nEnter the number of bits available for the mantissa: "))
-	exponent_bits = 4#int(input("\nEnter the number of bits available for the exponent: "))
-	try:
-		float(user_input)
-			#valid = True
-	except:
-		#valid = False
-		raise ValueError ("Has to be a number.")
-else:
-	print ("No")
+def denary_norm_main():
+	"""Interactive loop for option 1: denary → normalised binary."""
+	while True:
+			user_input = input("\nInput a denary number to be normalised, enter 'exit' to go back to the menu: ")
+			if user_input.lower() == "exit":
+				break
+			mantissa_bits = input("\nEnter the number of bits available for the mantissa: ")
+			exponent_bits = input("\nEnter the number of bits available for the exponent: ")
+			
+			try:
+				float(user_input)
+				mantissa_bits = int(mantissa_bits)
+				exponent_bits = int(exponent_bits)
+				print(main(user_input, "d-n", mantissa_bits, exponent_bits))
+			except ValueError:
+				print ("\nHas to be a number.\n")
+			
+def norm_to_denary_main():
+	"""Interactive loop for option 2: normalised binary → denary."""
+	error = False
+	while True:
+		user_input = input("\n\n\n Please enter your normalised binary (mantissa only), enter 'exit' to go back to the menu: ")
+		if user_input.lower() == "exit":
+			break
 		
-print(main(user_input, mantissa_bits, exponent_bits, task))
-#mantissa_bits = 0
-#exponent_bits = 0
+		# Validate using set operations
+		if not user_input or not set(user_input).issubset({'0', '1', '.'}):
+			print("\n\nHas to be a binary number.")
+			continue
 
+		# Check for multiple decimal points
+		if user_input.count('.') > 1:
+			print("\n\nInvalid format: only one decimal point allowed.")
+			continue
 
+		# Ask for exponent type after validation passes
+		exponent_type = input("\nHow would you like to enter the exponent?\n[1] Binary\n[2] Integer\nEnter 1 or 2: ")
+		
+		if exponent_type == "1":
+			exponent = input("\nPlease enter your exponent in binary: ")
+			try:
+				int(exponent, 2)
+				exponent = binary_to_denary(exponent)
+				error = False
+			except ValueError:
+				print ("\n\nExponent has to be an integer.\n")
+				error = True
+		elif exponent_type == "2":
+			exponent = input("\nPlease enter your exponent as a integer: ")
+			try:
+				exponent = int(exponent)
+				error = False
+			except ValueError:
+				print ("\nExponent has to be an integer.")
+				error = True
+		else:
+			print("\nInvalid input. Please try again.")
+			continue
+		
+		if not error:
+			print(main(user_input, "n-d", exponent = exponent))
+		
+def denary_to_binary_main():
+	"""Interactive loop for option 3: denary → binary."""
+	while True:
+		user_input = input("\n\nInput a denary number to be converted to binary, enter 'exit' to go back to the menu: ")
+	
+		if user_input.lower() == "exit":
+			break
+		try:
+			float(user_input)
+		except ValueError:
+			print ("\n\nHas to be a number.")
+			continue
+		binary = convert_to_binary(user_input)
+		if isinstance(binary, tuple):
+			print(f"\nThe binary value of your denary number is: {binary[0]}.{binary[1]}")
+		else:
+			print(f"\nThe binary value of your denary number is: {binary}")
 
+def binary_to_denary_main():
+	"""Interactive loop for option 4: binary → denary."""
+	while True:
+		user_input = input("\n\nInput a binary number to be converted to denary, enter 'exit' to go back to the menu: ")
+		if user_input.lower() == "exit":
+			break
+		
+		# Validate using set operations
+		if not user_input or not set(user_input).issubset({'0', '1', '.'}):
+			print("\n\nHas to be a binary number.")
+			continue
+		
+		# Check for multiple decimal points
+		if user_input.count('.') > 1:
+			print("\n\nInvalid format: only one decimal point allowed.")
+			continue
+			
+		try:
+			denary = binary_to_denary(user_input)
+			print(f"\nThe denary value of your binary number is: {denary}")
+		except ValueError as e:
+			print(e)
 
+def selection():
+	"""Display the menu and route to the selected conversion flow."""
+	while True:
+		task = input("""\n\n
+Please select one of the following options:
+[1] Denary to Normalised Binary
+[2] Normalised Binary to Denary
+[3] Convert a denary number to binary
+[4] Convert a binary number to denary
+[5] Exit the program\n\n
+Enter 1, 2, 3, 4 or 5 to select: """)
+		
+		if task == "1":
+			denary_norm_main()
+		elif task == "2":
+			norm_to_denary_main()
+		elif task == "3":
+			denary_to_binary_main()
+		elif task == "4":
+			binary_to_denary_main()
+		elif task == "5":
+			quit = input("\n\nAre you sure you want to quit? (y/n): ")
+			if quit.lower() == "y":
+				break
+		else:
+			print ("Invalid input. Please try again.")
 
+if __name__ == "__main__":
+	selection()
