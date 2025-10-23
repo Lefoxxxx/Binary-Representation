@@ -156,8 +156,8 @@ def normalise (binary: str, mantissa_bits: int, exponent_bits: int):
 		else:
 			exponent_binary = exponent_binary.rjust(exponent_bits,"0") # Ensuring the exponent binary is in a suitable number of bits available.
 	
+
 #------------- Preparing the normliased form --------------------------
-	#temp = mantissa[0] + "." + mantissa[1:]
 	normalised_form1 = str(binary_to_denary(f"{mantissa[0]}.{mantissa[1:]}")) + f"*2^{exponent}"
 	normalised_form2 = mantissa + " | " + exponent_binary
 
