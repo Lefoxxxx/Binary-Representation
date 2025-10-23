@@ -1,11 +1,30 @@
+"""Binary/denary conversion utilities with normalisation and an interactive CLI.
+
+Functions convert between denary (decimal) and binary (including fractional
+parts), provide a normalised mantissa/exponent view, and expose interactive
+menu flows for classroom use.
+"""
+
 # --------- Global Variables -----------------
 
 def twos_complement_binary (integer: int) -> int:
+	"""Return the two's-complement integer representing -integer.
+
+	Uses ``integer.bit_length() + 1`` bits to compute the wrapped value such
+	that ``result - (1 << bits) == -integer`` where ``bits`` is that size.
+	"""
 	min_binary_bit_len = integer.bit_length() + 1
 	integer = 2**min_binary_bit_len - integer
 	return integer
 
 def convert_to_binary (number: str) -> str:
+	"""Convert a denary string to binary.
+
+	Accepts inputs like "10", "5.5", "-7.75". Returns a plain string for
+	integers (e.g., "0101") or a tuple ``(integer_bits, fraction_bits)`` for
+	decimals. Negative decimals borrow 1 from the integer part and use
+	``(1 - fractional_part)`` for the fractional bits (two's-complement style).
+	"""
 	negative = False
 	binary_integer = ""
 	binary_decimal = ""
@@ -50,6 +69,12 @@ def convert_to_binary (number: str) -> str:
 
 
 def binary_to_denary (number: str) -> float:
+	"""Convert a binary string (optional fraction) to a denary value.
+
+	If the integer part starts with '1', it is interpreted as a negative
+	two's-complement integer for the width of the provided bits. Fractions are
+	summed as usual (1/2, 1/4, ...).
+	"""
 	decimal_value = 0.0
 	integer_value = 0
 
@@ -86,6 +111,12 @@ def binary_to_denary (number: str) -> float:
 			return integer_value
 	
 def normalise (binary: str, mantissa_bits: int, exponent_bits: int):
+	"""Normalise a binary value into mantissa/exponent bit widths.
+
+	Pads or truncates the mantissa to ``mantissa_bits`` and encodes the exponent
+	in two's complement using ``exponent_bits``. Returns a formatted description
+	and, if truncation occurred, includes absolute and relative error.
+	"""
 	error = False
 	absolute_error = 0
 	relative_error = 0
@@ -136,6 +167,11 @@ def normalise (binary: str, mantissa_bits: int, exponent_bits: int):
 	return (formatting + error_formatting) if error else formatting
 
 def error_calculation (mantissa: str, mantissa_error: str, exponent: int):
+	"""Compute absolute and relative (%) error for mantissa truncation.
+
+	Compares the full mantissa vs. a truncated mantissa at the same exponent and
+	returns ``(absolute_error, relative_error_percent)``.
+	"""
 	# Calculate the mantissa values in normalized form (0.xxxx)
 	full_mantissa_value = binary_to_denary(f"{mantissa[0]}.{mantissa[1:]}")
 	truncated_mantissa_value = binary_to_denary(mantissa_error)
@@ -155,6 +191,17 @@ def error_calculation (mantissa: str, mantissa_error: str, exponent: int):
 	return absolute_error, relative_error
 
 def main (number_to_convert , objective, mantissa_bits = None, exponent_bits = None, exponent = None):
+	"""High-level entry for conversions.
+
+	Args:
+		number_to_convert: Denary string or binary mantissa string depending on objective.
+		objective: "d-n" (denary → normalised) or "n-d" (normalised → denary).
+		mantissa_bits: Required when objective is "d-n".
+		exponent_bits: Required when objective is "d-n".
+		exponent: Required when objective is "n-d".
+
+	Returns a human-readable description or result string.
+	"""
 	if objective == "d-n": #denary to normalised
 		binary = convert_to_binary(number_to_convert)
 		normalised_form = normalise (binary, mantissa_bits, exponent_bits)
@@ -165,6 +212,7 @@ def main (number_to_convert , objective, mantissa_bits = None, exponent_bits = N
 		return f"\nThe denary value of your normalised binary is: {denary * (2**int(exponent))}"
 	
 def denary_norm_main():
+	"""Interactive loop for option 1: denary → normalised binary."""
 	while True:
 			user_input = input("\nInput a denary number to be normalised, enter 'exit' to go back to the menu: ")
 			if user_input.lower() == "exit":
@@ -181,6 +229,7 @@ def denary_norm_main():
 				print ("\nHas to be a number.\n")
 			
 def norm_to_denary_main():
+	"""Interactive loop for option 2: normalised binary → denary."""
 	error = False
 	while True:
 		user_input = input("\n\n\n Please enter your normalised binary (mantissa only), enter 'exit' to go back to the menu: ")
@@ -225,6 +274,7 @@ def norm_to_denary_main():
 			print(main(user_input, "n-d", exponent = exponent))
 		
 def denary_to_binary_main():
+	"""Interactive loop for option 3: denary → binary."""
 	while True:
 		user_input = input("\n\nInput a denary number to be converted to binary, enter 'exit' to go back to the menu: ")
 	
@@ -242,6 +292,7 @@ def denary_to_binary_main():
 			print(f"\nThe binary value of your denary number is: {binary}")
 
 def binary_to_denary_main():
+	"""Interactive loop for option 4: binary → denary."""
 	while True:
 		user_input = input("\n\nInput a binary number to be converted to denary, enter 'exit' to go back to the menu: ")
 		if user_input.lower() == "exit":
@@ -264,6 +315,7 @@ def binary_to_denary_main():
 			print(e)
 
 def selection():
+	"""Display the menu and route to the selected conversion flow."""
 	while True:
 		task = input("""\n\n
 Please select one of the following options:
