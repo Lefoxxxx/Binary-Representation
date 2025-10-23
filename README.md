@@ -8,7 +8,7 @@
 - Shows truncation error when mantissa overflows
 
 **Run**
-- Interactive menu: `python3 "Binary representation.py"`
+- Interactive menu: `python3 "Binary-representation.py"`
 
 **Conventions**
 - Negative integers use minimal‑width two’s complement (e.g., `-5 → 1011`, `-10 → 10110`).
@@ -24,4 +24,4 @@
 **Notes**
 - Non‑terminating fractions (e.g., 0.1) are not rounded/capped.
 - Binary input interpretation: a leading `1` in the integer part is treated as negative two’s complement for that input width. For unsigned interpretation, prefix a `0` (e.g., `0101`).
-- The filename has a space; use quotes when running: `python3 "Binary representation.py"`.
+- The filename has a space; use quotes when running: `python3 "Binary-representation.py"`.
